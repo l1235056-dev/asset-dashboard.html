@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>八大元素資產配置儀表板</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    header {
+      background: #111827;
+      color: white;
+      padding: 16px 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    header p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+    main {
+      max-width: 1200px;
+      margin: 20px auto 40px;
+      padding: 0 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 18px 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h3 {
+      margin: 10px 0 6px;
+      font-size: 15px;
+      border-left: 3px solid #2563eb;
+      padding-left: 8px;
+    }
+    .card p {
+      margin: 4px 0;
+      font-size: 13px;
+      color: #4b5563;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      margin-top: 8px;
+      margin-bottom: 2px;
+      color: #374151;
+    }
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+    }
+    input[type="range"] { width: 100%; }
+    .inline-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .third-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .small {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+      transition: transform 0.05s ease, box-shadow 0.05s ease,
+        background 0.1s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+      background: #1d4ed8;
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .highlight-box {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px dashed #d1d5db;
+      font-size: 12px;
+      color: #374151;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+    .stat-row span.label {
+      color: #6b7280;
+    }
+    .stat-row span.value {
+      font-weight: 600;
+    }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-4 { margin-top: 4px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      font-size: 11px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #374151;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.yellow { background: #fef9c3; color: #854d0e; }
+    .badge.red { background: #fee2e2; color: #b91c1c; }
+    .score {
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .score.good { color: #16a34a; }
+    .score.mid { color: #f59e0b; }
+    .score.bad { color: #dc2626; }
+    ul {
+      padding-left: 18px;
+      margin: 6px 0;
+      font-size: 12px;
+      color: #374151;
+    }
+    .section-block {
+      border-top: 1px dashed #e5e7eb;
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+    .allocation-row {
+      display: grid;
+      grid-template-columns: 2.3fr 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .allocation-header {
+      font-weight: 600;
+      color: #4b5563;
+    }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 720px) {
+      .chart-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    canvas {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>八大元素資產配置儀表板</h1>
+  <p>整合安全性、流動性、成長性、風險分散、現金流、槓桿、家庭需求與動態調整，快速看出你的資產健康度與未來複利軌跡。</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- 左側：輸入區 -->
+    <section class="card">
+      <h2>
+        資料輸入
+        <span class="pill">Step 1：填入目前狀況</span>
+      </h2>
+
+      <h3>一、資產與負債概況</h3>
+      <div class="inline-row">
+        <div>
+          <label for="cashNow">現金 / 活存（高流動性）</label>
+          <input id="cashNow" type="number" min="0" placeholder="例如：500000" />
+        </div>
+        <div>
+          <label for="investNow">投資市值（ETF / 股票 / 基金）</label>
+          <input id="investNow" type="number" min="0" placeholder="例如：1200000" />
+        </div>
+      </div>
+
+      <div class="inline-row">
+        <div>
+          <label for="propertyValue">房產市值總額</label>
+          <input id="propertyValue" type="number" min="0" placeholder="例如：35000000" />
+        </div>
+        <div>
+          <label for="mortgageDebt">房貸本金尚欠總額</label>
+          <input id="mortgageDebt" type="number" min="0" placeholder="例如：20000000" />
+        </div>
+      </div>
+
+      <div class="inline-row">
+        <div>
+          <label for="otherDebt">其他負債（車貸 / 信貸 / 卡債）</label>
+          <input id="otherDebt" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label for="singleStock">最大單一股票市值（看集中度）</label>
+          <input id="singleStock" type="number" min="0" value="0" />
+        </div>
+      </div>
+
+      <p class="small">
+        淨資產 ≈ 現金 + 投資 + 房產市值 − 負債（房貸 + 其他負債）。這會在右邊自動計算。
+      </p>
+
+      <h3>二、每月現金流 & 預備金</h3>
+      <div class="inline-row">
+        <div>
+          <label for="monthlyIncome">每月可支配收入（薪水 + 分紅）</label>
+          <input id="monthlyIncome" type="number" min="0" placeholder="例如：300000" />
+        </div>
+        <div>
+          <label for="monthlyExpenses">每月總支出（含房貸、學費等）</label>
+          <input id="monthlyExpenses" type="number" min="0" placeholder="例如：220000" />
+        </div>
+      </div>
+
+      <div class="inline-row">
+        <div>
+          <label for="monthlyMortgagePay">每月房貸總額</label>
+          <input id="monthlyMortgagePay" type="number" min="0" placeholder="例如：90000" />
+        </div>
+        <div>
+          <label for="emergencyFundNow">目前預備金金額</label>
+          <input id="emergencyFundNow" type="number" min="0" placeholder="例如：400000" />
+        </div>
+      </div>
+
+      <div class="inline-row">
+        <div>
+          <label for="emergencyMonths">預備金目標月數</label>
+          <input id="emergencyMonths" type="number" min="0" value="12" />
+          <div class="small">常見：6 ～ 12 個月家庭支出</div>
+        </div>
+        <div>
+          <label for="lumpIn">預計一次性流入（如賣房 730 萬）</label>
+          <input id="lumpIn" type="number" min="0" value="0" />
+        </div>
+      </div>
+
+      <h3>三、家庭未來大額支出</h3>
+      <div class="third-row">
+        <div>
+          <label for="annualEdu">每年教育支出（小孩學費 + 才藝）</label>
+          <input id="annualEdu" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label for="bigPlan5y">未來五年大額計畫（裝潢 / 旅行 / 換屋準備）</label>
+          <input id="bigPlan5y" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label for="yearsSim">模擬年數（預設 5 年）</label>
+          <input id="yearsSim" type="number" min="1" value="5" />
+        </div>
+      </div>
+
+      <h3>四、風險偏好 & 成長資產目標</h3>
+      <label for="growthTarget">成長資產目標占比（ETF / 股票）</label>
+      <input id="growthTarget" type="range" min="0" max="70" value="30" />
+      <div class="small">
+        目前目標：<span id="growthTargetLabel">30%</span> 淨資產放在成長資產。
+      </div>
+
+      <label for="riskPref">當前風險偏好（針對「新投入」）</label>
+      <input id="riskPref" type="range" min="0" max="100" value="50" />
+      <div class="small">
+        目前：<span id="riskPrefLabel">中等</span>。愈保守 → 新錢多放預備金與還債；愈積極 → 多放成長資產。
+      </div>
+
+      <button id="calcBtn">計算資產健康度 & 本月資金路由</button>
+      <p class="small mt-8">
+        建議：先用現在的數字測試，等 730 萬或其他大筆資金實際入帳時，把
+        「預計一次性流入」改成實際金額，重新跑一次，照建議的比例執行。
+      </p>
+    </section>
+
+    <!-- 右側：結果區 -->
+    <section class="card">
+      <h2>
+        分析結果
+        <span class="pill">Step 2：檢視八大元素</span>
+      </h2>
+
+      <div id="placeholder">
+        <p class="small">
+          請先在左側輸入資料，按下「計算資產健康度 & 本月資金路由」。這裡會顯示：
+        </p>
+        <ul>
+          <li>預備金、流動性、成長性與風險分散指標</li>
+          <li>現金流、槓桿（DSCR）與家庭支出覆蓋度</li>
+          <li>綜合資產健康分數</li>
+          <li>本月資金路由建議（預備金 / 還債 / 成長資產）</li>
+          <li>八大元素雷達圖 + 未來複利地圖</li>
+        </ul>
+      </div>
+
+      <div id="result" style="display:none;">
+        <div class="section-block">
+          <div class="stat-row">
+            <span class="label">估算淨資產</span>
+            <span class="value" id="netWorth"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">資產健康分數（0～100）</span>
+            <span class="value">
+              <span id="healthScore" class="score">-</span>
+            </span>
+          </div>
+          <p class="small" id="scoreMsg"></p>
+        </div>
+
+        <div class="section-block">
+          <h3>1 & 2. 安全性 & 流動性</h3>
+          <div class="stat-row">
+            <span class="label">預備金目標</span>
+            <span class="value" id="emergencyTarget"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">預備金缺口</span>
+            <span class="value" id="emergencyGap"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">流動性比率（現金 ÷ 淨資產）</span>
+            <span class="value" id="liqRatio"></span>
+          </div>
+          <p class="small" id="safetyMsg"></p>
+          <span id="safetyBadge" class="badge"></span>
+          <span id="liqBadge" class="badge"></span>
+        </div>
+
+        <div class="section-block">
+          <h3>3 & 4. 成長性 & 風險分散</h3>
+          <div class="stat-row">
+            <span class="label">目前成長資產比率（投資 ÷ 淨資產）</span>
+            <span class="value" id="growthRatio"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">房產占比（房產市值 ÷ 淨資產）</span>
+            <span class="value" id="propRatio"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">最大單一股票集中度</span>
+            <span class="value" id="singleStockRatio"></span>
+          </div>
+          <p class="small" id="growthMsg"></p>
+          <span id="growthBadge" class="badge"></span>
+          <span id="divBadge" class="badge"></span>
+        </div>
+
+        <div class="section-block">
+          <h3>5 & 6. 現金流 & 槓桿</h3>
+          <div class="stat-row">
+            <span class="label">每月自由現金流（收入 − 支出）</span>
+            <span class="value" id="freeCash"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">每月房貸總額</span>
+            <span class="value" id="mortgagePayOut"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">簡易 DSCR（>1.2 較安全）</span>
+            <span class="value" id="dscr"></span>
+          </div>
+          <p class="small" id="cashflowMsg"></p>
+          <span id="cashflowBadge" class="badge"></span>
+          <span id="dscrBadge" class="badge"></span>
+        </div>
+
+        <div class="section-block">
+          <h3>7. 家庭導向（教育 & 大額支出）</h3>
+          <div class="stat-row">
+            <span class="label">未來五年教育支出總額</span>
+            <span class="value" id="edu5y"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">未來五年大額計畫（裝潢 / 旅遊等）</span>
+            <span class="value" id="bigPlan5yOut"></span>
+          </div>
+          <div class="stat-row">
+            <span class="label">五年總需求（教育 + 大額支出）</span>
+            <span class="value" id="familyNeedTotal"></span>
+          </div>
+          <p class="small" id="familyMsg"></p>
+          <span id="familyBadge" class="badge"></span>
+        </div>
+
+        <div class="section-block">
+          <h3>8. 動態調整：本次「新資金」路由建議</h3>
+          <p class="small">
+            以「手上現金 + 預計一次性流入」為基準，依安全性 / 槓桿 / 風險偏好分配到三個桶：預備金、還債、成長資產。
+          </p>
+
+          <div class="stat-row">
+            <span class="label">本次可運用現金（現金 + 一次性流入）</span>
+            <span class="value" id="totalAvailable"></span>
+          </div>
+
+          <div class="allocation-row allocation-header mt-4">
+            <div>資金用途</div>
+            <div>金額</div>
+            <div>佔本次資金</div>
+          </div>
+          <div class="allocation-row">
+            <div>1️⃣ 補足預備金</div>
+            <div id="allocEmergency"></div>
+            <div id="allocEmergencyPct"></div>
+          </div>
+          <div class="allocation-row">
+            <div>2️⃣ 房貸 / 負債提前還款</div>
+            <div id="allocDebt"></div>
+            <div id="allocDebtPct"></div>
+          </div>
+          <div class="allocation-row">
+            <div>3️⃣ 成長資產（ETF / 長線股票）</div>
+            <div id="allocGrowth"></div>
+            <div id="allocGrowthPct"></div>
+          </div>
+
+          <div class="highlight-box mt-8" id="routingMsg"></div>
+          <div class="highlight-box mt-8" id="adviceText"></div>
+        </div>
+
+        <!-- 視覺化：雷達圖 + 複利地圖 -->
+        <div class="section-block">
+          <h3>視覺化：八大元素雷達圖 & 淨資產複利地圖</h3>
+          <div class="chart-grid">
+            <div>
+              <p class="small">八大元素雷達圖（分數愈靠外代表愈健康）</p>
+              <canvas id="radarChart" height="240"></canvas>
+            </div>
+            <div>
+              <p class="small">未來淨資產複利地圖（假設穩定投入與合理報酬）</p>
+              <canvas id="growthChart" height="240"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  function parseNumber(id) {
+    var v = document.getElementById(id).value.trim();
+    var n = parseFloat(v);
+    if (isNaN(n) || !isFinite(n)) return 0;
+    return Math.max(0, n);
+  }
+
+  function formatMoney(n) {
+    return n.toLocaleString("zh-TW", {
+      style: "currency",
+      currency: "TWD",
+      maximumFractionDigits: 0
+    });
+  }
+
+  function formatPercent01(x) {
+    return (x * 100).toFixed(1) + "%";
+  }
+
+  const growthSlider = document.getElementById("growthTarget");
+  const growthLabel = document.getElementById("growthTargetLabel");
+  const riskSlider = document.getElementById("riskPref");
+  const riskLabel = document.getElementById("riskPrefLabel");
+
+  function updateGrowthLabel() {
+    growthLabel.textContent = growthSlider.value + "%";
+  }
+
+  function updateRiskLabel() {
+    var v = parseInt(riskSlider.value, 10);
+    var t = "中等";
+    if (v <= 20) t = "非常保守";
+    else if (v <= 40) t = "偏保守";
+    else if (v <= 60) t = "中等";
+    else if (v <= 80) t = "偏積極";
+    else t = "非常積極";
+    riskLabel.textContent = t;
+  }
+
+  growthSlider.addEventListener("input", updateGrowthLabel);
+  riskSlider.addEventListener("input", updateRiskLabel);
+  updateGrowthLabel();
+  updateRiskLabel();
+
+  // Chart.js 實例
+  let radarChartInstance = null;
+  let growthChartInstance = null;
+
+  function renderRadarChart(scores) {
+    var ctx = document.getElementById("radarChart").getContext("2d");
+    if (radarChartInstance) radarChartInstance.destroy();
+    radarChartInstance = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: [
+          "安全性",
+          "流動性",
+          "成長性",
+          "分散度",
+          "現金流",
+          "槓桿",
+          "家庭需求",
+          "動態調整"
+        ],
+        datasets: [
+          {
+            label: "資產健康分數（0–100）",
+            data: scores,
+            fill: true,
+            borderWidth: 2,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            suggestedMin: 0,
+            suggestedMax: 100,
+            ticks: {
+              stepSize: 20,
+              display: true
+            },
+            angleLines: { display: true },
+            grid: { display: true }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  function renderGrowthChart(netWorthNow, annualContribution, annualRate, years) {
+    var ctx = document.getElementById("growthChart").getContext("2d");
+    if (growthChartInstance) growthChartInstance.destroy();
+
+    var labels = [];
+    var data = [];
+    var value = netWorthNow;
+
+    for (var i = 0; i <= years; i++) {
+      labels.push("第 " + i + " 年");
+      data.push(Math.max(0, value));
+      value = value * (1 + annualRate) + annualContribution;
+    }
+
+    growthChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "預估淨資產",
+            data: data,
+            borderWidth: 2,
+            tension: 0.25,
+            pointRadius: 2,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { title: { display: false } },
+          y: {
+            title: { display: false },
+            ticks: {
+              callback: function(value) {
+                return "NT$ " + (value / 1000000).toFixed(1) + "M";
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", function () {
+    // 讀取輸入
+    var cash = parseNumber("cashNow");
+    var invest = parseNumber("investNow");
+    var propVal = parseNumber("propertyValue");
+    var mortgageDebt = parseNumber("mortgageDebt");
+    var otherDebt = parseNumber("otherDebt");
+    var singleStock = parseNumber("singleStock");
+    var monthlyIncome = parseNumber("monthlyIncome");
+    var monthlyExpenses = parseNumber("monthlyExpenses");
+    var monthlyMortgagePay = parseNumber("monthlyMortgagePay");
+    var emergencyFundNow = parseNumber("emergencyFundNow");
+    var emergencyMonths = parseNumber("emergencyMonths");
+    var lumpIn = parseNumber("lumpIn");
+    var annualEdu = parseNumber("annualEdu");
+    var bigPlan5y = parseNumber("bigPlan5y");
+    var yearsSim = parseNumber("yearsSim") || 5;
+
+    var growthTargetPct = parseInt(growthSlider.value, 10) / 100;
+    var risk = parseInt(riskSlider.value, 10) / 100;
+
+    // 淨資產
+    var totalAssets = cash + invest + propVal;
+    var totalDebt = mortgageDebt + otherDebt;
+    var netWorth = totalAssets - totalDebt;
+
+    if (netWorth <= 0) {
+      alert("目前淨資產計算為 0 或以下，請確認資產與負債數字是否正確。");
+      return;
+    }
+
+    // Element 1：安全性
+    var emergencyTarget = monthlyExpenses * emergencyMonths;
+    var emergencyGap = Math.max(0, emergencyTarget - emergencyFundNow);
+
+    // Element 2：流動性
+    var liqRatio = cash / netWorth;
+
+    // Element 3：成長性
+    var growthRatio = invest / netWorth;
+
+    // Element 4：風險分散
+    var propRatio = propVal / netWorth;
+    var singleStockRatio = invest > 0 ? singleStock / invest : 0;
+
+    // Element 5：現金流
+    var freeCash = monthlyIncome - monthlyExpenses;
+
+    // Element 6：槓桿（DSCR）
+    var nonDebtExpenses = Math.max(0, monthlyExpenses - monthlyMortgagePay);
+    var dscr = null;
+    if (monthlyMortgagePay > 0 && monthlyIncome > 0) {
+      var noi = monthlyIncome - nonDebtExpenses;
+      dscr = noi / monthlyMortgagePay;
+    }
+
+    // Element 7：家庭導向
+    var eduTotal = annualEdu * yearsSim;
+    var familyNeedTotal = eduTotal + bigPlan5y;
+    var freeCashYear = freeCash * 12;
+    var freeCashTotal = freeCashYear * yearsSim;
+    var familyCoverBase = emergencyFundNow + Math.max(0, freeCashTotal);
+    var familyCoverRatio = familyNeedTotal > 0 ? familyCoverBase / familyNeedTotal : 1;
+
+    // Element 8：動態調整（資金路由）
+    var totalAvailable = cash + lumpIn;
+    if (totalAvailable <= 0) {
+      alert("請至少在「現金 / 活存」或「預計一次性流入」輸入一點金額。");
+      return;
+    }
+
+    var allocEmergency = Math.min(emergencyGap, totalAvailable);
+    var remainAfterEmergency = totalAvailable - allocEmergency;
+
+    var growthWeight = 0.3 + 0.4 * risk; // 0.3~0.7
+    var debtWeight = 1 - growthWeight;
+
+    if (dscr !== null && dscr < 1.0) {
+      debtWeight = Math.min(0.85, debtWeight + 0.3);
+      growthWeight = 1 - debtWeight;
+    } else if (dscr !== null && dscr < 1.2) {
+      debtWeight = Math.min(0.75, debtWeight + 0.15);
+      growthWeight = 1 - debtWeight;
+    }
+
+    var allocDebt = remainAfterEmergency * debtWeight;
+    var allocGrowth = remainAfterEmergency * growthWeight;
+
+    var allocEmPct = allocEmergency / totalAvailable || 0;
+    var allocDebtPct = allocDebt / totalAvailable || 0;
+    var allocGrPct = allocGrowth / totalAvailable || 0;
+
+    // 資產健康分數
+    function scoreSafety(gap, target) {
+      if (target === 0) return 60;
+      var ratio = (target - gap) / target;
+      if (ratio >= 1) return 95;
+      if (ratio >= 0.7) return 80;
+      if (ratio >= 0.4) return 60;
+      return 40;
+    }
+    function scoreLiquidity(r) {
+      if (r >= 0.2 && r <= 0.4) return 90;
+      if (r >= 0.1 && r < 0.2) return 75;
+      if (r > 0.4 && r <= 0.6) return 70;
+      if (r >= 0.05 && r < 0.1) return 55;
+      return 40;
+    }
+    function scoreGrowth(gr, target) {
+      if (target === 0) return 60;
+      var diff = Math.abs(gr - target);
+      if (diff <= 0.05) return 90;
+      if (diff <= 0.10) return 75;
+      if (diff <= 0.20) return 60;
+      return 45;
+    }
+    function scoreDiversify(pr, ssr) {
+      var s = 90;
+      if (pr > 0.7) s -= 25;
+      else if (pr > 0.6) s -= 15;
+      if (ssr > 0.4) s -= 25;
+      else if (ssr > 0.25) s -= 15;
+      return Math.max(30, s);
+    }
+    function scoreCashflow(fc) {
+      if (fc <= 0) return 40;
+      var ratio = fc / (monthlyIncome || 1);
+      if (ratio >= 0.3) return 90;
+      if (ratio >= 0.15) return 80;
+      if (ratio >= 0.05) return 70;
+      return 55;
+    }
+    function scoreLeverage(d) {
+      if (d === null) return 60;
+      if (d < 1.0) return 40;
+      if (d < 1.2) return 60;
+      if (d < 1.5) return 75;
+      return 90;
+    }
+    function scoreFamily(fr) {
+      if (familyNeedTotal === 0) return 70;
+      if (fr >= 1.2) return 90;
+      if (fr >= 1.0) return 80;
+      if (fr >= 0.7) return 65;
+      return 45;
+    }
+
+    var s1 = scoreSafety(emergencyGap, emergencyTarget);
+    var s2 = scoreLiquidity(liqRatio);
+    var s3 = scoreGrowth(growthRatio, growthTargetPct);
+    var s4 = scoreDiversify(propRatio, singleStockRatio);
+    var s5 = scoreCashflow(freeCash);
+    var s6 = scoreLeverage(dscr);
+    var s7 = scoreFamily(familyCoverRatio);
+    var s8 = 80; // 動態調整可以視為預設良好，之後你要可再改成更精細
+
+    var healthScore =
+      s1 * 0.2 +
+      s2 * 0.1 +
+      s3 * 0.2 +
+      s4 * 0.1 +
+      s5 * 0.15 +
+      s6 * 0.15 +
+      s7 * 0.05 +
+      s8 * 0.05;
+
+    // 畫面更新
+    document.getElementById("placeholder").style.display = "none";
+    document.getElementById("result").style.display = "block";
+
+    document.getElementById("netWorth").textContent = formatMoney(netWorth);
+    var scoreEl = document.getElementById("healthScore");
+    scoreEl.textContent = Math.round(healthScore);
+    scoreEl.classList.remove("good", "mid", "bad");
+    var scoreMsg = "";
+    if (healthScore >= 80) {
+      scoreEl.classList.add("good");
+      scoreMsg = "整體資產健康不錯，可以在維持安全性的前提下，聚焦成長資產與事業布局。";
+    } else if (healthScore >= 60) {
+      scoreEl.classList.add("mid");
+      scoreMsg = "資產體質在可接受範圍，但某些區塊（例如預備金、槓桿或集中度）需要微調。";
+    } else {
+      scoreEl.classList.add("bad");
+      scoreMsg = "目前風險偏高，建議先強化預備金、減少槓桿或集中度，再談積極投資。";
+    }
+    document.getElementById("scoreMsg").textContent = scoreMsg;
+
+    // 安全 & 流動性
+    document.getElementById("emergencyTarget").textContent = formatMoney(emergencyTarget);
+    document.getElementById("emergencyGap").textContent = formatMoney(emergencyGap);
+    document.getElementById("liqRatio").textContent = formatPercent01(liqRatio);
+
+    var safetyMsg = "";
+    var safetyBadge = document.getElementById("safetyBadge");
+    safetyBadge.className = "badge";
+    if (emergencyTarget === 0) {
+      safetyMsg = "尚未設定預備金目標，可考慮以 6～12 個月家庭支出作為基準。";
+      safetyBadge.textContent = "預備金：建議設定目標";
+      safetyBadge.classList.add("yellow");
+    } else if (emergencyGap <= 0) {
+      safetyMsg = "預備金已達或超過目標，安全墊充足，可以把新資金更多分配在還債與成長資產。";
+      safetyBadge.textContent = "預備金：充足";
+      safetyBadge.classList.add("green");
+    } else if (emergencyGap <= emergencyTarget * 0.3) {
+      safetyMsg = "預備金接近目標，建議接下來幾次現金流優先補滿缺口。";
+      safetyBadge.textContent = "預備金：接近目標";
+      safetyBadge.classList.add("yellow");
+    } else {
+      safetyMsg = "預備金與目標差距較大，建議短期新資金優先填補安全墊，避免意外事件壓力過大。";
+      safetyBadge.textContent = "預備金：偏不足";
+      safetyBadge.classList.add("red");
+    }
+
+    var liqBadge = document.getElementById("liqBadge");
+    liqBadge.className = "badge";
+    var liqText = "";
+    if (liqRatio >= 0.2 && liqRatio <= 0.4) {
+      liqText = "流動性：良好";
+      liqBadge.classList.add("green");
+    } else if (liqRatio >= 0.1 && liqRatio < 0.2) {
+      liqText = "流動性：略低";
+      liqBadge.classList.add("yellow");
+    } else if (liqRatio > 0.4 && liqRatio <= 0.6) {
+      liqText = "流動性：偏高（現金可能太多）";
+      liqBadge.classList.add("yellow");
+    } else {
+      liqText = "流動性：需注意（現金偏少或極度集中）";
+      liqBadge.classList.add("red");
+    }
+    liqBadge.textContent = liqText;
+    document.getElementById("safetyMsg").textContent = safetyMsg;
+
+    // 成長性 & 分散
+    document.getElementById("growthRatio").textContent = formatPercent01(growthRatio);
+    document.getElementById("propRatio").textContent = formatPercent01(propRatio);
+    document.getElementById("singleStockRatio").textContent = formatPercent01(singleStockRatio);
+
+    var growthMsg = "";
+    var growthBadge = document.getElementById("growthBadge");
+    growthBadge.className = "badge";
+    var diffGrowth = growthRatio - growthTargetPct;
+    if (growthTargetPct === 0) {
+      growthMsg = "尚未設定成長資產目標比例，可以依年齡與風險偏好，設定 20～60% 的長期目標。";
+      growthBadge.textContent = "成長性：需訂目標";
+      growthBadge.classList.add("yellow");
+    } else if (Math.abs(diffGrowth) <= 0.05) {
+      growthMsg = "成長資產比例接近你的目標，節奏穩定，可以專注在持續投入與選標的品質。";
+      growthBadge.textContent = "成長性：接近目標";
+      growthBadge.classList.add("green");
+    } else if (diffGrowth < -0.05) {
+      growthMsg = "目前成長資產比例低於目標，代表偏保守，若安全墊足夠，可逐步加大長期 ETF / 股票的比重。";
+      growthBadge.textContent = "成長性：偏保守";
+      growthBadge.classList.add("yellow");
+    } else {
+      growthMsg = "目前成長資產比例高於目標，若配合槓桿與現金流壓力，需留意波動風險與回撤。";
+      growthBadge.textContent = "成長性：偏積極";
+      growthBadge.classList.add("yellow");
+    }
+
+    var divBadge = document.getElementById("divBadge");
+    divBadge.className = "badge";
+    var divText = "";
+    if (propRatio > 0.7 && singleStockRatio > 0.4) {
+      divText = "分散：房產重 & 單一股票集中";
+      divBadge.classList.add("red");
+    } else if (propRatio > 0.7 || singleStockRatio > 0.4) {
+      divText = "分散：有明顯集中風險";
+      divBadge.classList.add("yellow");
+    } else if (propRatio > 0.6 || singleStockRatio > 0.25) {
+      divText = "分散：稍偏集中，可逐步分散。";
+      divBadge.classList.add("yellow");
+    } else {
+      divText = "分散：尚可，仍可視狀況微調。";
+      divBadge.classList.add("green");
+    }
+    divBadge.textContent = divText;
+    document.getElementById("growthMsg").textContent = growthMsg;
+
+    // 現金流 & 槓桿
+    document.getElementById("freeCash").textContent = formatMoney(freeCash);
+    document.getElementById("mortgagePayOut").textContent = formatMoney(monthlyMortgagePay);
+    var dscrText = "-";
+    if (dscr !== null && isFinite(dscr)) {
+      dscrText = dscr.toFixed(2);
+    }
+    document.getElementById("dscr").textContent = dscrText;
+
+    var cashflowMsg = "";
+    var cashflowBadge = document.getElementById("cashflowBadge");
+    cashflowBadge.className = "badge";
+    if (freeCash <= 0) {
+      cashflowMsg = "目前每月自由現金流小於等於 0，建議先調整支出或提升收入，否則即使資產配置再好也會感到吃力。";
+      cashflowBadge.textContent = "現金流：緊繃";
+      cashflowBadge.classList.add("red");
+    } else {
+      var ratioFC = freeCash / (monthlyIncome || 1);
+      if (ratioFC >= 0.3) {
+        cashflowMsg = "自由現金流充裕，可以每月固定配置到成長資產與還債，穩定拉升淨資產。";
+        cashflowBadge.textContent = "現金流：充裕";
+        cashflowBadge.classList.add("green");
+      } else if (ratioFC >= 0.15) {
+        cashflowMsg = "自由現金流尚可，經過有計畫的分配（預備金 / 還債 / 投資），可以逐步改善資產體質。";
+        cashflowBadge.textContent = "現金流：尚可";
+        cashflowBadge.classList.add("yellow");
+      } else {
+        cashflowMsg = "自由現金流偏少，短期內新資金建議優先強化預備金與減少槓桿。";
+        cashflowBadge.textContent = "現金流：偏少";
+        cashflowBadge.classList.add("yellow");
+      }
+    }
+
+    var dscrBadge = document.getElementById("dscrBadge");
+    dscrBadge.className = "badge";
+    var dscrMsg = "";
+    if (dscr === null || !isFinite(dscr)) {
+      dscrMsg = "如要更精準評估槓桿風險，請確認每月房貸與收入欄位皆有填寫。";
+      dscrBadge.textContent = "DSCR：資料不足";
+      dscrBadge.classList.add("yellow");
+    } else if (dscr < 1.0) {
+      dscrMsg = "DSCR 低於 1，債務償債能力偏弱，建議優先減少槓桿或增加收入，避免新增大額負債。";
+      dscrBadge.textContent = "DSCR：偏危險";
+      dscrBadge.classList.add("red");
+    } else if (dscr < 1.2) {
+      dscrMsg = "DSCR 介於 1～1.2，尚可但緊繃，近期不宜大幅增加房貸或投資槓桿。";
+      dscrBadge.textContent = "DSCR：偏緊";
+      dscrBadge.classList.add("yellow");
+    } else if (dscr < 1.5) {
+      dscrMsg = "DSCR 超過 1.2，槓桿在可控範圍內，可以搭配風險偏好做有節奏的投資。";
+      dscrBadge.textContent = "DSCR：安全";
+      dscrBadge.classList.add("green");
+    } else {
+      dscrMsg = "DSCR 超過 1.5，債務償債能力相對充裕，可以視人生規劃評估換屋或增加成長資產比例。";
+      dscrBadge.textContent = "DSCR：充裕";
+      dscrBadge.classList.add("green");
+    }
+
+    document.getElementById("cashflowMsg").textContent = cashflowMsg + " " + dscrMsg;
+
+    // 家庭導向
+    document.getElementById("edu5y").textContent = formatMoney(eduTotal);
+    document.getElementById("bigPlan5yOut").textContent = formatMoney(bigPlan5y);
+    document.getElementById("familyNeedTotal").textContent = formatMoney(familyNeedTotal);
+
+    var familyMsg = "";
+    var familyBadge = document.getElementById("familyBadge");
+    familyBadge.className = "badge";
+    if (familyNeedTotal === 0) {
+      familyMsg = "尚未輸入未來教育與大額支出，建議把「你已經知道一定會發生的事情」先估進來，模型會更貼近真實人生。";
+      familyBadge.textContent = "家庭需求：尚未設定";
+      familyBadge.classList.add("yellow");
+    } else if (familyCoverRatio >= 1.2) {
+      familyMsg = "依目前預備金與未來可累積自由現金流，你大致可以覆蓋未來 " + yearsSim + " 年的教育與大額支出，壓力相對可控。";
+      familyBadge.textContent = "家庭需求：可被支撐";
+      familyBadge.classList.add("green");
+    } else if (familyCoverRatio >= 1.0) {
+      familyMsg = "若未來收入與支出維持現在的節奏，整體上勉強能支撐家庭需求，但遇到意外會較吃緊。可以適度提高預備金或增加收入。";
+      familyBadge.textContent = "家庭需求：勉強支撐";
+      familyBadge.classList.add("yellow");
+    } else {
+      familyMsg = "以目前預備金 + 預估自由現金流，可能無法完全覆蓋未來 " + yearsSim + " 年的教育與大額支出，建議重新檢視：支出節奏 / 投資報酬 / 槓桿速度。";
+      familyBadge.textContent = "家庭需求：偏吃緊";
+      familyBadge.classList.add("red");
+    }
+    document.getElementById("familyMsg").textContent = familyMsg;
+
+    // 動態調整：資金路由
+    document.getElementById("totalAvailable").textContent = formatMoney(totalAvailable);
+    document.getElementById("allocEmergency").textContent = formatMoney(allocEmergency);
+    document.getElementById("allocDebt").textContent = formatMoney(allocDebt);
+    document.getElementById("allocGrowth").textContent = formatMoney(allocGrowth);
+    document.getElementById("allocEmergencyPct").textContent = formatPercent01(allocEmPct);
+    document.getElementById("allocDebtPct").textContent = formatPercent01(allocDebtPct);
+    document.getElementById("allocGrowthPct").textContent = formatPercent01(allocGrPct);
+
+    var routingMsg =
+      "把每次的大額現金（例如：獎金、賣房款）視為一批「新資金」，先依上方比例分配到三個桶：「安全預備金 → 還債 → 成長資產」。" +
+      "當預備金已達目標、DSCR 又在安全範圍時，未來就可以逐步降低還債占比、拉高成長資產占比。";
+    document.getElementById("routingMsg").textContent = routingMsg;
+
+    var adviceLines = [];
+    adviceLines.push("• 先確認預備金與流動性燈號，安全性不足時，本年度重點放在『填補預備金 + 降低槓桿』。");
+    adviceLines.push("• 當預備金充足且 DSCR ≥ 1.2 時，可以把多餘現金穩定投入成長資產（以寬基 ETF / 長期持有標的為主）。");
+    adviceLines.push("• 若房產占比過高，且未來有換屋計畫，可利用這套模型模擬「賣一間換一間」的時機與風險。");
+    adviceLines.push("• 若單一股票集中度偏高，建議逐步移轉到分散度較好的 ETF 或多標的組合，降低『單一公司事件』風險。");
+    adviceLines.push("• 每 6～12 個月重新輸入最新數字，檢查健康分數與八大元素變化，確保整體方向與人生計畫一致。");
+
+    document.getElementById("adviceText").innerHTML = adviceLines.join("<br>");
+
+    // 🔹 雷達圖（八大元素分數）
+    renderRadarChart([s1, s2, s3, s4, s5, s6, s7, s8]);
+
+    // 🔹 複利地圖
+    // 使用風險偏好推估報酬率：4%～8%
+    var annualRate = 0.04 + 0.04 * risk;
+    // 假設每年可穩定投入的金額：自由現金流的 70% + 本次 allocGrowth 攤平到第一年
+    var annualContribution = Math.max(0, freeCash * 12 * 0.7) + allocGrowth;
+    renderGrowthChart(netWorth, annualContribution, annualRate, yearsSim);
+  });
+</script>
+</body>
+</html>
+
